@@ -7,10 +7,6 @@ import {Camera, CameraPermissionStatus} from 'react-native-vision-camera';
 import {CONTENT_SPACING, SAFE_AREA_PADDING} from './Constants';
 import type {Routes} from './Routes';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-// const BANNER_IMAGE =
-//   require('../../docs/static/img/11.png') as ImageRequireSource;
-
 type Props = NativeStackScreenProps<Routes, 'PermissionsPage'>;
 
 export function PermissionsPage({navigation}: Props): React.ReactElement {
@@ -20,10 +16,7 @@ export function PermissionsPage({navigation}: Props): React.ReactElement {
     useState<CameraPermissionStatus>('not-determined');
 
   const requestMicrophonePermission = useCallback(async () => {
-    console.log('Requesting microphone permission...');
     const permission = await Camera.requestMicrophonePermission();
-    console.log(`Microphone permission status: ${permission}`);
-
     if (permission === 'denied') {
       await Linking.openSettings();
     }
@@ -31,10 +24,7 @@ export function PermissionsPage({navigation}: Props): React.ReactElement {
   }, []);
 
   const requestCameraPermission = useCallback(async () => {
-    console.log('Requesting camera permission...');
     const permission = await Camera.requestCameraPermission();
-    console.log(`Camera permission status: ${permission}`);
-
     if (permission === 'denied') {
       await Linking.openSettings();
     }
@@ -53,12 +43,11 @@ export function PermissionsPage({navigation}: Props): React.ReactElement {
   return (
     <View style={styles.container}>
       {/* <Image source={BANNER_IMAGE} style={styles.banner} /> */}
-      <Text style={styles.welcome}>Welcome to{'\n'}Vision Camera.</Text>
+      <Text style={styles.welcome}>Welcome to{'\n'}My Photos.</Text>
       <View style={styles.permissionsContainer}>
         {cameraPermissionStatus !== 'authorized' && (
           <Text style={styles.permissionText}>
-            Vision Camera needs{' '}
-            <Text style={styles.bold}>Camera permission</Text>.
+            My Photos needs <Text style={styles.bold}>Camera permission</Text>.
             <Text style={styles.hyperlink} onPress={requestCameraPermission}>
               Grant
             </Text>
@@ -66,7 +55,7 @@ export function PermissionsPage({navigation}: Props): React.ReactElement {
         )}
         {microphonePermissionStatus !== 'authorized' && (
           <Text style={styles.permissionText}>
-            Vision Camera needs{' '}
+            My Photos needs{' '}
             <Text style={styles.bold}>Microphone permission</Text>.
             <Text
               style={styles.hyperlink}

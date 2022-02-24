@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useRef} from 'react';
+import React, {useRef} from 'react';
 import {StyleSheet, View, ViewProps} from 'react-native';
 import {
   PanGestureHandler,
@@ -16,12 +16,7 @@ import Reanimated, {
   useSharedValue,
   withRepeat,
 } from 'react-native-reanimated';
-import type {
-  Camera,
-  PhotoFile,
-  TakePhotoOptions,
-  TakeSnapshotOptions,
-} from 'react-native-vision-camera';
+import type {Camera, PhotoFile} from 'react-native-vision-camera';
 import {CAPTURE_BUTTON_SIZE, SCREEN_HEIGHT, SCREEN_WIDTH} from './../Constants';
 
 const PAN_GESTURE_HANDLER_FAIL_X = [-SCREEN_WIDTH, SCREEN_WIDTH];
@@ -42,51 +37,38 @@ interface Props extends ViewProps {
   enabled: boolean;
 
   setIsPressingButton: (isPressingButton: boolean) => void;
+  timer: number;
+  capturePhotos: () => void;
 }
 
 const _CaptureButton: React.FC<Props> = ({
-  camera,
-  onMediaCaptured,
+  // camera,
+  // onMediaCaptured,
   minZoom,
   maxZoom,
   cameraZoom,
-  flash,
   enabled,
   style,
+  capturePhotos,
   ...props
 }): React.ReactElement => {
-  const takePhotoOptions = useMemo<TakePhotoOptions & TakeSnapshotOptions>(
-    () => ({
-      photoCodec: 'jpeg',
-      qualityPrioritization: 'speed',
-      flash: flash,
-      quality: 90,
-      skipMetadata: true,
-    }),
-    [flash],
-  );
+  // const takePhotoOptions = useMemo<TakePhotoOptions & TakeSnapshotOptions>(
+  //   () => ({
+  //     photoCodec: 'jpeg',
+  //     qualityPrioritization: 'speed',
+  //     flash: flash,
+  //     quality: 90,
+  //     skipMetadata: true,
+  //   }),
+  //   [flash],
+  // );
+
   const isPressingButton = useSharedValue(false);
 
-  //#region Camera Capture
-  const takePhoto = useCallback(async () => {
-    try {
-      if (camera.current == null) {
-        throw new Error('Camera ref is null!');
-      }
-
-      console.log('Taking photo...');
-      const photo = await camera.current.takePhoto(takePhotoOptions);
-      onMediaCaptured(photo, 'photo');
-    } catch (e) {
-      console.error('Failed to take photo!', e);
-    }
-  }, [camera, onMediaCaptured, takePhotoOptions]);
-  //#region Tap handler
   const tapHandler = useRef<TapGestureHandler>();
 
-  //#endregion
-  //#region Pan handler
   const panHandler = useRef<PanGestureHandler>();
+
   const onPanGestureEvent = useAnimatedGestureHandler<
     PanGestureHandlerGestureEvent,
     {offsetY?: number; startY?: number}
@@ -96,7 +78,6 @@ const _CaptureButton: React.FC<Props> = ({
       const yForFullZoom = context.startY * 0.7;
       const offsetYForFullZoom = context.startY - yForFullZoom;
 
-      // extrapolate [0 ... 1] zoom -> [0 ... Y_FOR_FULL_ZOOM] finger position
       context.offsetY = interpolate(
         cameraZoom.value,
         [minZoom, maxZoom],
@@ -117,7 +98,6 @@ const _CaptureButton: React.FC<Props> = ({
       );
     },
   });
-  //#endregion
 
   const shadowStyle = useAnimatedStyle(
     () => ({
@@ -176,7 +156,7 @@ const _CaptureButton: React.FC<Props> = ({
     <TapGestureHandler
       enabled={enabled}
       ref={tapHandler}
-      onHandlerStateChange={takePhoto}
+      onHandlerStateChange={capturePhotos}
       shouldCancelWhenOutside={false}
       maxDurationMs={99999999} // <-- this prevents the TapGestureHandler from going to State.FAILED when the user moves his finger outside of the child view (to zoom)
       simultaneousHandlers={panHandler}>
@@ -191,6 +171,7 @@ const _CaptureButton: React.FC<Props> = ({
           <Reanimated.View style={styles.flex}>
             <Reanimated.View style={[styles.shadow, shadowStyle]} />
             <View style={styles.button} />
+            {/* <Text>{`${timer / 1000}s`}</Text> */}
           </Reanimated.View>
         </PanGestureHandler>
       </Reanimated.View>

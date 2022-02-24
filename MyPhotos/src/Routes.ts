@@ -2,7 +2,14 @@ export type Routes = {
   PermissionsPage: undefined;
   CameraPage: undefined;
   MediaPage: {
-    path: string;
-    type: 'video' | 'photo';
+    data: string[];
   };
 };
+
+export interface File {
+  cancelled: boolean;
+  height?: number;
+  type?: string;
+  uri?: string;
+  width?: number;
+}

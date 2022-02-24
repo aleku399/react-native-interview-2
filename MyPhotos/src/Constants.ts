@@ -27,3 +27,5 @@ export const SCREEN_HEIGHT = Platform.select<number>({
 
 // Capture Button
 export const CAPTURE_BUTTON_SIZE = 78;
+
+export const baseURL = 'https://c446-41-210-155-171.ngrok.io/api';

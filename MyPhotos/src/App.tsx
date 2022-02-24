@@ -2,10 +2,10 @@ import {NavigationContainer} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {PermissionsPage} from './PermissionsPage';
-import {MediaPage} from './MediaPage';
 import {CameraPage} from './CameraPage';
 import type {Routes} from './Routes';
 import {Camera, CameraPermissionStatus} from 'react-native-vision-camera';
+import Gallery from './views/Gallery';
 
 const Stack = createNativeStackNavigator<Routes>();
 
@@ -16,8 +16,6 @@ export function App(): React.ReactElement | null {
   useEffect(() => {
     Camera.getCameraPermissionStatus().then(setCameraPermission);
   }, []);
-
-  console.log(`Re-rendering Navigator. Camera: ${cameraPermission}`);
 
   if (cameraPermission == null) {
     // still loading
@@ -41,7 +39,7 @@ export function App(): React.ReactElement | null {
         <Stack.Screen name="CameraPage" component={CameraPage} />
         <Stack.Screen
           name="MediaPage"
-          component={MediaPage}
+          component={Gallery}
           options={{
             animation: 'none',
             presentation: 'transparentModal',
