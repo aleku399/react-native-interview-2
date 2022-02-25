@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   StatusBar,
   StyleSheet,
+  Text,
   View,
 } from 'react-native';
 import {PressableOpacity} from 'react-native-pressable-opacity';
@@ -13,13 +14,15 @@ import IonIcon from 'react-native-vector-icons/Ionicons';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {Routes} from '../Routes';
 import ShareModal from './ShareModal';
+import {StatusBarBlurBackground} from './StatusBarBlurBackground';
+import {SAFE_AREA_PADDING} from '../Constants';
 
 type Props = NativeStackScreenProps<Routes, 'MediaPage'>;
 
 const Item = ({item, onPress}: {item: any; onPress: any}) => (
   <View>
     <Image style={styles.image} source={{uri: item.uri}} />
-    <View style={styles.main}>
+    <View style={styles.shareButtonContainer}>
       <PressableOpacity style={styles.shareButton} onPress={onPress}>
         <IonIcon
           name="share-social-outline"
@@ -32,7 +35,7 @@ const Item = ({item, onPress}: {item: any; onPress: any}) => (
   </View>
 );
 
-const Gallery = ({route}: Props) => {
+const Gallery = ({route, navigation}: Props) => {
   const {data} = route.params;
   const [isShared, setIsShared] = useState(false);
 
@@ -47,13 +50,27 @@ const Gallery = ({route}: Props) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList
-        style={styles.flatListStyle}
-        data={sources}
-        renderItem={renderItem}
-        numColumns={2}
-        keyExtractor={item => item.id}
-      />
+      <PressableOpacity style={styles.back} onPress={navigation.goBack}>
+        <IonIcon
+          name="arrow-back"
+          size={35}
+          color="white"
+          style={styles.icon}
+        />
+      </PressableOpacity>
+
+      <View style={styles.main}>
+        <Text style={styles.text}>My Photos</Text>
+
+        <FlatList
+          style={styles.flatListStyle}
+          data={sources}
+          renderItem={renderItem}
+          numColumns={2}
+          keyExtractor={item => item.id}
+        />
+      </View>
+      <StatusBarBlurBackground />
       <ShareModal showModal={isShared} closeModal={() => setIsShared(false)} />
     </SafeAreaView>
   );
@@ -67,7 +84,7 @@ const styles = StyleSheet.create({
   },
   main: {
     flex: 1,
-    alignItems: 'center',
+    marginTop: 50,
   },
   item: {
     padding: 20,
@@ -83,6 +100,9 @@ const styles = StyleSheet.create({
     margin: 10,
   },
   flatListStyle: {flex: 1},
+  shareButtonContainer: {
+    alignItems: 'center',
+  },
   shareButton: {
     width: 40,
     height: 40,
@@ -94,6 +114,19 @@ const styles = StyleSheet.create({
       width: 0,
     },
     textShadowRadius: 1,
+  },
+  back: {
+    position: 'absolute',
+    top: SAFE_AREA_PADDING.paddingTop,
+    left: SAFE_AREA_PADDING.paddingLeft,
+    width: 40,
+    height: 40,
+  },
+  text: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 
