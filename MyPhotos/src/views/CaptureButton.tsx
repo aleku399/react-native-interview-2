@@ -52,17 +52,6 @@ const _CaptureButton: React.FC<Props> = ({
   capturePhotos,
   ...props
 }): React.ReactElement => {
-  // const takePhotoOptions = useMemo<TakePhotoOptions & TakeSnapshotOptions>(
-  //   () => ({
-  //     photoCodec: 'jpeg',
-  //     qualityPrioritization: 'speed',
-  //     flash: flash,
-  //     quality: 90,
-  //     skipMetadata: true,
-  //   }),
-  //   [flash],
-  // );
-
   const isPressingButton = useSharedValue(false);
 
   const tapHandler = useRef<TapGestureHandler>();
@@ -158,7 +147,7 @@ const _CaptureButton: React.FC<Props> = ({
       ref={tapHandler}
       onHandlerStateChange={capturePhotos}
       shouldCancelWhenOutside={false}
-      maxDurationMs={99999999} // <-- this prevents the TapGestureHandler from going to State.FAILED when the user moves his finger outside of the child view (to zoom)
+      maxDurationMs={99999999}
       simultaneousHandlers={panHandler}>
       <Reanimated.View {...props} style={[buttonStyle, style]}>
         <PanGestureHandler
@@ -171,7 +160,6 @@ const _CaptureButton: React.FC<Props> = ({
           <Reanimated.View style={styles.flex}>
             <Reanimated.View style={[styles.shadow, shadowStyle]} />
             <View style={styles.button} />
-            {/* <Text>{`${timer / 1000}s`}</Text> */}
           </Reanimated.View>
         </PanGestureHandler>
       </Reanimated.View>

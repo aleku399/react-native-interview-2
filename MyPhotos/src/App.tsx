@@ -1,3 +1,4 @@
+import {LogBox} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
@@ -6,6 +7,10 @@ import {CameraPage} from './CameraPage';
 import type {Routes} from './Routes';
 import {Camera, CameraPermissionStatus} from 'react-native-vision-camera';
 import Gallery from './views/Gallery';
+
+LogBox.ignoreLogs([
+  "[react-native-gesture-handler] Seems like you're using an old API with gesture components, check out new Gestures system!",
+]);
 
 const Stack = createNativeStackNavigator<Routes>();
 
