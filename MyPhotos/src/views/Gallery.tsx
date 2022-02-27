@@ -1,7 +1,6 @@
-import React, {useMemo, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import {
   Dimensions,
-  FlatList,
   Image,
   SafeAreaView,
   StatusBar,
@@ -9,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import {FlatList} from 'native-base';
 import {PressableOpacity} from 'react-native-pressable-opacity';
 import IonIcon from 'react-native-vector-icons/Ionicons';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -16,10 +16,17 @@ import {Routes} from '../Routes';
 import ShareModal from './ShareModal';
 import {StatusBarBlurBackground} from './StatusBarBlurBackground';
 import {SAFE_AREA_PADDING} from '../Constants';
+import {photoApi} from '../lib/apiEndpoints';
+import {authAxios} from '../lib/axios';
 
 type Props = NativeStackScreenProps<Routes, 'MediaPage'>;
 
-const Item = ({item, onPress}: {item: any; onPress: any}) => (
+interface Item {
+  uri: string;
+  id: string;
+}
+
+const Item = ({item, onPress}: {item: Item; onPress: any}) => (
   <View>
     <Image style={styles.image} source={{uri: item.uri}} />
     <View style={styles.shareButtonContainer}>
@@ -38,15 +45,54 @@ const Item = ({item, onPress}: {item: any; onPress: any}) => (
 const Gallery = ({route, navigation}: Props) => {
   const {data} = route.params;
   const [isShared, setIsShared] = useState(false);
+  const [img, setImg] = useState('');
 
   const sources = useMemo(() => {
     const uriCaptures = data.map(path => ({uri: `file://${path}`, id: path}));
     return uriCaptures;
   }, [data]);
 
-  const renderItem = ({item}: {item: any}) => {
-    return <Item item={item} onPress={() => setIsShared(true)} />;
+  const onPress = (item: Item) => {
+    setIsShared(true);
+    setImg(item.uri);
   };
+
+  const renderItem = ({item}: {item: Item}) => {
+    return <Item item={item} onPress={() => onPress(item)} />;
+  };
+
+  const uploadingImage = async (
+    body: unknown,
+    headers?: Record<string, string>,
+  ): Promise<void> => {
+    try {
+      const url = photoApi;
+      const response = await authAxios().post(url, body, {
+        headers,
+      });
+      console.log('response', response);
+    } catch (errors: any) {
+      const splitError = errors.toString().split(': ');
+      console.log(splitError);
+    }
+  };
+
+  const uploadImage = useCallback(async (path: string): Promise<void> => {
+    const name = path.split('tmp/ReactNative/')[1];
+    const type = path.split('tmp/ReactNative/')[1].split('.')[1];
+
+    const formData = new FormData();
+
+    formData.append('document', {
+      name,
+      type: `image/${type}`,
+      uri: path,
+    } as unknown) as unknown as Blob;
+
+    await uploadingImage(formData, {
+      'Content-Type': 'multipart/form-data',
+    });
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -70,8 +116,12 @@ const Gallery = ({route, navigation}: Props) => {
           keyExtractor={item => item.id}
         />
       </View>
+      <ShareModal
+        showModal={isShared}
+        closeModal={() => setIsShared(false)}
+        uploadImage={uploadImage(img)}
+      />
       <StatusBarBlurBackground />
-      <ShareModal showModal={isShared} closeModal={() => setIsShared(false)} />
     </SafeAreaView>
   );
 };

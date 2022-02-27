@@ -26,8 +26,6 @@ import IonIcon from 'react-native-vector-icons/Ionicons';
 import type {Routes} from './Routes';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useIsFocused} from '@react-navigation/core';
-import {authAxios} from './lib/axios';
-import {photoApi} from './lib/apiEndpoints';
 
 const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera);
 
@@ -45,6 +43,7 @@ export function CameraPage({navigation}: Props): React.ReactElement {
   const [timer, setTimer] = useState(1000);
   const [captures, setCaptures] = useState<Array<string>>([]);
   const [isCaptured, setIsCaptured] = useState<boolean>(false);
+  const [isTakingPhoto, setIsTakingPhoto] = useState<boolean>(false);
 
   const zoom = useSharedValue(0);
   const isPressingButton = useSharedValue(false);
@@ -148,65 +147,30 @@ export function CameraPage({navigation}: Props): React.ReactElement {
     console.log('re-rendering camera page without active camera');
   }
 
-  const uploadingImage = async (
-    body: unknown,
-    headers?: Record<string, string>,
-  ): Promise<void> => {
-    try {
-      const url = photoApi;
-      const response = await authAxios().post(url, body, {
-        headers,
-      });
-      console.log('response', response);
-    } catch (errors: any) {
-      const splitError = errors.toString().split(': ');
-      console.log(splitError);
-    }
-  };
-
-  const uploadImage = useCallback(async (path: string): Promise<void> => {
-    const name = path.split('tmp/ReactNative/')[1];
-    const type = path.split('tmp/ReactNative/')[1].split('.')[1];
-
-    const formData = new FormData();
-
-    formData.append('document', {
-      name,
-      type: `image/${type}`,
-      uri: path,
-    } as unknown) as unknown as Blob;
-
-    await uploadingImage(formData, {
-      'Content-Type': 'multipart/form-data',
-    });
-  }, []);
-
-  const takePhoto = useCallback(async () => {
-    try {
-      if (camera.current == null) {
-        throw new Error('Camera ref is null!');
-      }
-
-      const photo = await camera.current.takePhoto(takePhotoOptions);
-      await uploadImage(photo.path);
-      const arrPhotos = [photo.path];
-      setCaptures([...arrPhotos, ...captures]);
-    } catch (e) {
-      console.error('Failed to take photo!', e);
-    }
-  }, [captures, takePhotoOptions, uploadImage]);
-
   const onBurst = useCallback(() => {
+    setIsTakingPhoto(true);
+
     let count = 0;
     const id = setInterval(async () => {
-      await takePhoto();
+      const images = await Promise.all(
+        Array.from(Array(5), () => camera.current.takePhoto(takePhotoOptions)),
+      );
+
+      const pathImages = images.map(img => img.path);
+
+      console.log('pathImages', pathImages.length);
+
+      setCaptures([...pathImages, ...captures]);
+
+      console.log('captures', captures.length);
       count++;
-      if (count === 3) {
+      if (count === 2) {
+        setIsTakingPhoto(false);
         clearInterval(id);
         setIsCaptured(true);
       }
     }, timer);
-  }, [takePhoto, timer]);
+  }, [captures, takePhotoOptions, timer]);
 
   useEffect(() => {
     if (isCaptured) {
@@ -246,7 +210,7 @@ export function CameraPage({navigation}: Props): React.ReactElement {
         minZoom={minZoom}
         maxZoom={maxZoom}
         flash={supportsFlash ? flash : 'off'}
-        enabled={isCameraInitialized && isActive}
+        enabled={isCameraInitialized && isActive && !isTakingPhoto}
         setIsPressingButton={setIsPressingButton}
         timer={timer}
         capturePhotos={onBurst}
