@@ -1,37 +1,41 @@
+import {Text, Input, VStack} from 'native-base';
 import React, {useState} from 'react';
-import {StyleSheet, Text, TextInput, View, Alert, Modal} from 'react-native';
+import {StyleSheet, View, Alert, Modal} from 'react-native';
 import {PressableOpacity} from 'react-native-pressable-opacity';
 import IonIcon from 'react-native-vector-icons/Ionicons';
 
 interface Props {
   showModal: boolean;
   closeModal: () => void;
+  uploadImage: Promise<void>;
 }
 
-function ShareModal({showModal, closeModal}: Props) {
+function ShareModal({showModal, closeModal, uploadImage}: Props) {
   const [endPoint, setEndPoint] = useState('');
 
   return (
-    <View style={styles.container}>
-      <Modal visible={showModal} transparent={true}>
-        <View style={styles.container}>
-          <View style={styles.main}>
-            <PressableOpacity style={styles.closeButton} onPress={closeModal}>
-              <IonIcon
-                name="close"
-                size={35}
-                color="white"
-                style={styles.icon}
-              />
+    <Modal visible={showModal} transparent={true}>
+      <View style={styles.container}>
+        <View style={styles.main}>
+          <PressableOpacity style={styles.closeButton} onPress={closeModal}>
+            <IonIcon name="close" size={35} color="black" style={styles.icon} />
+          </PressableOpacity>
+          <VStack space={1}>
+            <PressableOpacity onPress={() => uploadImage}>
+              <Text style={styles.text}>Send to backend api</Text>
             </PressableOpacity>
-            <View style={styles.iconContainer}>
-              <Text>Enter api end point</Text>
-              <TextInput
-                style={styles.input}
+            <VStack space={1}>
+              <Text style={styles.text}>Enter api end point</Text>
+              <Input
+                mx={3}
+                w="75%"
+                maxWidth="300px"
                 placeholder="Api End point"
                 onChangeText={value => setEndPoint(value)}
                 onBlur={() => Alert.alert(`Shared On ${endPoint}`)}
               />
+            </VStack>
+            <View style={styles.iconContainer}>
               <PressableOpacity
                 style={styles.shareButton}
                 onPress={() => Alert.alert('Shared on twitter')}>
@@ -53,10 +57,10 @@ function ShareModal({showModal, closeModal}: Props) {
                 />
               </PressableOpacity>
             </View>
-          </View>
+          </VStack>
         </View>
-      </Modal>
-    </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -67,11 +71,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   main: {
-    backgroundColor: '#00B2EE',
+    backgroundColor: '#F0FFF0',
     justifyContent: 'center',
-    borderRadius: 6,
+    borderRadius: 10,
     width: 250,
     height: 250,
+  },
+  text: {
+    marginLeft: 12,
   },
   iconContainer: {
     alignItems: 'center',

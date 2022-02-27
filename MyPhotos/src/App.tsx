@@ -2,6 +2,7 @@ import {LogBox} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {NativeBaseProvider} from 'native-base';
 import {PermissionsPage} from './PermissionsPage';
 import {CameraPage} from './CameraPage';
 import type {Routes} from './Routes';
@@ -30,27 +31,29 @@ export function App(): React.ReactElement | null {
   const showPermissionsPage = cameraPermission !== 'authorized';
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-          statusBarStyle: 'dark',
-          animationTypeForReplace: 'push',
-        }}
-        initialRouteName={
-          showPermissionsPage ? 'PermissionsPage' : 'CameraPage'
-        }>
-        <Stack.Screen name="PermissionsPage" component={PermissionsPage} />
-        <Stack.Screen name="CameraPage" component={CameraPage} />
-        <Stack.Screen
-          name="MediaPage"
-          component={Gallery}
-          options={{
-            animation: 'none',
-            presentation: 'transparentModal',
+    <NativeBaseProvider>
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            statusBarStyle: 'dark',
+            animationTypeForReplace: 'push',
           }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+          initialRouteName={
+            showPermissionsPage ? 'PermissionsPage' : 'CameraPage'
+          }>
+          <Stack.Screen name="PermissionsPage" component={PermissionsPage} />
+          <Stack.Screen name="CameraPage" component={CameraPage} />
+          <Stack.Screen
+            name="MediaPage"
+            component={Gallery}
+            options={{
+              animation: 'none',
+              presentation: 'transparentModal',
+            }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </NativeBaseProvider>
   );
 }
