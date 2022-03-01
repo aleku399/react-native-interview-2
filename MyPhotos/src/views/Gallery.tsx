@@ -15,9 +15,9 @@ import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {Routes} from '../Routes';
 import ShareModal from './ShareModal';
 import {StatusBarBlurBackground} from './StatusBarBlurBackground';
-import {SAFE_AREA_PADDING} from '../Constants';
+import {baseURL, SAFE_AREA_PADDING} from '../Constants';
 import {photoApi} from '../lib/apiEndpoints';
-import {authAxios} from '../lib/axios';
+import axios from 'axios';
 
 type Props = NativeStackScreenProps<Routes, 'MediaPage'>;
 
@@ -61,39 +61,26 @@ const Gallery = ({route, navigation}: Props) => {
     return <Item item={item} onPress={() => onPress(item)} />;
   };
 
-  const uploadingImage = async (
-    body: unknown,
-    headers?: Record<string, string>,
-  ): Promise<void> => {
+  const uploadImage = useCallback(async (path: string): Promise<void> => {
     try {
-      const url = photoApi;
-      const response = await authAxios().post(url, body, {
-        headers,
-      });
-      console.log('response', response);
+      const name = path.split('tmp/ReactNative/')[1];
+      const type = path.split('tmp/ReactNative/')[1].split('.')[1];
+
+      const formData = new FormData();
+
+      formData.append('document', {
+        name,
+        type: `image/${type}`,
+        uri: path,
+      } as unknown) as unknown as Blob;
+
+      await axios.post(`${baseURL}${photoApi}`, formData);
     } catch (errors: any) {
       const splitError = errors.toString().split(': ');
       console.log(splitError);
     }
-  };
-
-  const uploadImage = useCallback(async (path: string): Promise<void> => {
-    const name = path.split('tmp/ReactNative/')[1];
-    const type = path.split('tmp/ReactNative/')[1].split('.')[1];
-
-    const formData = new FormData();
-
-    formData.append('document', {
-      name,
-      type: `image/${type}`,
-      uri: path,
-    } as unknown) as unknown as Blob;
-
-    await uploadingImage(formData, {
-      'Content-Type': 'multipart/form-data',
-    });
   }, []);
-
+  console.log('img', img);
   return (
     <SafeAreaView style={styles.container}>
       <PressableOpacity style={styles.back} onPress={navigation.goBack}>
@@ -119,7 +106,7 @@ const Gallery = ({route, navigation}: Props) => {
       <ShareModal
         showModal={isShared}
         closeModal={() => setIsShared(false)}
-        uploadImage={uploadImage(img)}
+        uploadImage={() => uploadImage(img)}
       />
       <StatusBarBlurBackground />
     </SafeAreaView>

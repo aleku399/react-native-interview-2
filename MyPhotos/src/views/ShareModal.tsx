@@ -7,7 +7,7 @@ import IonIcon from 'react-native-vector-icons/Ionicons';
 interface Props {
   showModal: boolean;
   closeModal: () => void;
-  uploadImage: Promise<void>;
+  uploadImage: () => Promise<void>;
 }
 
 function ShareModal({showModal, closeModal, uploadImage}: Props) {
@@ -21,7 +21,7 @@ function ShareModal({showModal, closeModal, uploadImage}: Props) {
             <IonIcon name="close" size={35} color="black" style={styles.icon} />
           </PressableOpacity>
           <VStack space={1}>
-            <PressableOpacity onPress={() => uploadImage}>
+            <PressableOpacity onPress={uploadImage}>
               <Text style={styles.text}>Send to backend api</Text>
             </PressableOpacity>
             <VStack space={1}>

@@ -1,1 +1,1 @@
-export const photoApi = '/';
+export const photoApi = '/photos';
