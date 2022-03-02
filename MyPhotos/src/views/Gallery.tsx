@@ -1,17 +1,16 @@
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useMemo, useState, useEffect} from 'react';
 import {
   Dimensions,
-  Image,
   SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import {FlatList} from 'native-base';
 import {PressableOpacity} from 'react-native-pressable-opacity';
 import IonIcon from 'react-native-vector-icons/Ionicons';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+import Gallery from 'react-native-image-gallery';
 import {Routes} from '../Routes';
 import ShareModal from './ShareModal';
 import {StatusBarBlurBackground} from './StatusBarBlurBackground';
@@ -19,47 +18,50 @@ import {baseURL, SAFE_AREA_PADDING} from '../Constants';
 import {photoApi} from '../lib/apiEndpoints';
 import axios from 'axios';
 
+console.disableYellowBox = true;
+
 type Props = NativeStackScreenProps<Routes, 'MediaPage'>;
 
 interface Item {
   uri: string;
-  id: string;
 }
 
-const Item = ({item, onPress}: {item: Item; onPress: any}) => (
-  <View>
-    <Image style={styles.image} source={{uri: item.uri}} />
-    <View style={styles.shareButtonContainer}>
-      <PressableOpacity style={styles.shareButton} onPress={onPress}>
-        <IonIcon
-          name="share-social-outline"
-          size={35}
-          color="white"
-          style={styles.icon}
-        />
-      </PressableOpacity>
-    </View>
-  </View>
-);
+interface Size {
+  width: number;
+  height: number;
+}
 
-const Gallery = ({route, navigation}: Props) => {
+interface GImage {
+  source: Item;
+  dimensions: Size;
+}
+
+const PhotoGallery = ({route, navigation}: Props) => {
   const {data} = route.params;
   const [isShared, setIsShared] = useState(false);
-  const [img, setImg] = useState('');
+  const [images, setImages] = useState<Array<GImage>>([]);
+  const [selected, setSelected] = useState<number>(0);
+  const [uri, setUri] = useState<string>('');
 
-  const sources = useMemo(() => {
-    const uriCaptures = data.map(path => ({uri: `file://${path}`, id: path}));
-    return uriCaptures;
+  const onChangeImage = (index: React.SetStateAction<number>) => {
+    setSelected(index);
+  };
+
+  useMemo(() => {
+    const uriCaptures = data.map(path => ({
+      source: {uri: `file://${path}`},
+      dimensions: {width: 150, height: 90},
+    }));
+    setImages(uriCaptures);
   }, [data]);
 
-  const onPress = (item: Item) => {
-    setIsShared(true);
-    setImg(item.uri);
-  };
-
-  const renderItem = ({item}: {item: Item}) => {
-    return <Item item={item} onPress={() => onPress(item)} />;
-  };
+  useEffect(() => {
+    const imageToShare = images.filter(
+      (_image: GImage, index: number) => index === selected,
+    );
+    const {source} = imageToShare[0];
+    setUri(source.uri);
+  }, [images, selected]);
 
   const uploadImage = useCallback(async (path: string): Promise<void> => {
     try {
@@ -74,13 +76,20 @@ const Gallery = ({route, navigation}: Props) => {
         uri: path,
       } as unknown) as unknown as Blob;
 
-      await axios.post(`${baseURL}${photoApi}`, formData);
+      const config = {
+        headers: {
+          'content-type': 'multipart/form-data',
+        },
+      };
+
+      const res = axios.post(`${baseURL}${photoApi}`, formData, config);
+      console.log('res', res);
     } catch (errors: any) {
       const splitError = errors.toString().split(': ');
       console.log(splitError);
     }
   }, []);
-  console.log('img', img);
+
   return (
     <SafeAreaView style={styles.container}>
       <PressableOpacity style={styles.back} onPress={navigation.goBack}>
@@ -95,18 +104,28 @@ const Gallery = ({route, navigation}: Props) => {
       <View style={styles.main}>
         <Text style={styles.text}>My Photos</Text>
 
-        <FlatList
-          style={styles.flatListStyle}
-          data={sources}
-          renderItem={renderItem}
-          numColumns={2}
-          keyExtractor={item => item.id}
+        <Gallery
+          style={styles.galleryContainer}
+          images={images}
+          onPageSelected={onChangeImage}
+          initialPage={selected}
         />
+
+        <PressableOpacity
+          style={styles.shareButton}
+          onPress={() => setIsShared(true)}>
+          <IonIcon
+            name="share-social-outline"
+            size={35}
+            color="white"
+            style={styles.icon}
+          />
+        </PressableOpacity>
       </View>
       <ShareModal
         showModal={isShared}
         closeModal={() => setIsShared(false)}
-        uploadImage={() => uploadImage(img)}
+        uploadImage={() => uploadImage(uri)}
       />
       <StatusBarBlurBackground />
     </SafeAreaView>
@@ -119,9 +138,13 @@ const styles = StyleSheet.create({
     marginTop: StatusBar.currentHeight || 0,
     backgroundColor: 'black',
   },
+  galleryContainer: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
   main: {
     flex: 1,
-    marginTop: 50,
+    margin: 50,
   },
   item: {
     padding: 20,
@@ -139,10 +162,6 @@ const styles = StyleSheet.create({
   flatListStyle: {flex: 1},
   shareButtonContainer: {
     alignItems: 'center',
-  },
-  shareButton: {
-    width: 40,
-    height: 40,
   },
   icon: {
     textShadowColor: 'black',
@@ -165,6 +184,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  shareButton: {
+    position: 'absolute',
+    bottom: SAFE_AREA_PADDING.paddingBottom,
+    left: SAFE_AREA_PADDING.paddingLeft,
+    width: 40,
+    height: 40,
+  },
 });
 
-export default Gallery;
+export default PhotoGallery;
