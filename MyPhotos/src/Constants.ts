@@ -28,5 +28,5 @@ export const SCREEN_HEIGHT = Platform.select<number>({
 // Capture Button
 export const CAPTURE_BUTTON_SIZE = 78;
 
-// Add backend API by tunneling 4001
-export const baseURL = 'https://e286-41-210-159-87.ngrok.io/api';
+// Add backend API by tunneling on ngrok 4001 (http//localhost:4001)
+export const baseURL = 'https://427e-41-210-146-103.ngrok.io/api';
