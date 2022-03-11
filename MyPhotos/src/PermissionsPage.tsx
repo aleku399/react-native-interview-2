@@ -42,7 +42,6 @@ export function PermissionsPage({navigation}: Props): React.ReactElement {
 
   return (
     <View style={styles.container}>
-      {/* <Image source={BANNER_IMAGE} style={styles.banner} /> */}
       <Text style={styles.welcome}>Welcome to{'\n'}My Photos.</Text>
       <View style={styles.permissionsContainer}>
         {cameraPermissionStatus !== 'authorized' && (

@@ -7,7 +7,7 @@ import IonIcon from 'react-native-vector-icons/Ionicons';
 interface Props {
   showModal: boolean;
   closeModal: () => void;
-  uploadImage: () => Promise<void>;
+  uploadImage?: () => Promise<void>;
 }
 
 function ShareModal({showModal, closeModal, uploadImage}: Props) {

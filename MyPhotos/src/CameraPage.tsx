@@ -12,11 +12,8 @@ import {
   useCameraDevices,
 } from 'react-native-vision-camera';
 import {Camera} from 'react-native-vision-camera';
-import {CONTENT_SPACING, MAX_ZOOM_FACTOR, SAFE_AREA_PADDING} from './Constants';
-import Reanimated, {
-  useAnimatedProps,
-  useSharedValue,
-} from 'react-native-reanimated';
+import {CONTENT_SPACING, SAFE_AREA_PADDING} from './Constants';
+import Reanimated, {useSharedValue} from 'react-native-reanimated';
 import {useEffect} from 'react';
 import {useIsForeground} from './hooks/useIsForeground';
 import {StatusBarBlurBackground} from './views/StatusBarBlurBackground';
@@ -45,7 +42,6 @@ export function CameraPage({navigation}: Props): React.ReactElement {
   const [isCaptured, setIsCaptured] = useState<boolean>(false);
   const [isTakingPhoto, setIsTakingPhoto] = useState<boolean>(false);
 
-  const zoom = useSharedValue(0);
   const isPressingButton = useSharedValue(false);
 
   // check if camera page is active
@@ -81,19 +77,6 @@ export function CameraPage({navigation}: Props): React.ReactElement {
   );
 
   const supportsFlash = device?.hasFlash ?? false;
-  //#region Animated Zoom
-  // This just maps the zoom factor to a percentage value.
-  // so e.g. for [min, neutr., max] values [1, 2, 128] this would result in [0, 0.0081, 1]
-  const minZoom = device?.minZoom ?? 1;
-  const maxZoom = Math.min(device?.maxZoom ?? 1, MAX_ZOOM_FACTOR);
-
-  const cameraAnimatedProps = useAnimatedProps(() => {
-    const z = Math.max(Math.min(zoom.value, maxZoom), minZoom);
-    return {
-      zoom: z,
-    };
-  }, [maxZoom, minZoom, zoom]);
-  //#endregion
 
   //#region Callbacks
 
@@ -148,29 +131,36 @@ export function CameraPage({navigation}: Props): React.ReactElement {
   }
 
   const onBurst = useCallback(() => {
-    setIsTakingPhoto(true);
-
-    let count = 0;
-    const id = setInterval(async () => {
-      const images = await Promise.all(
-        Array.from(Array(5), () => camera.current.takePhoto(takePhotoOptions)),
-      );
-
-      const pathImages = images.map(img => img.path);
-
-      console.log('pathImages', pathImages.length);
-
-      setCaptures([...pathImages, ...captures]);
-
-      console.log('captures', captures.length);
-      count++;
-      if (count === 2) {
-        setIsTakingPhoto(false);
-        clearInterval(id);
-        setIsCaptured(true);
+    try {
+      if (camera.current == null) {
+        throw new Error('Camera ref is null!');
       }
-    }, timer);
-  }, [captures, takePhotoOptions, timer]);
+
+      setIsTakingPhoto(true);
+
+      let count = 0;
+      const id = setInterval(async () => {
+        const images = await Promise.all(
+          Array.from(Array(5), () =>
+            camera.current.takePhoto(takePhotoOptions),
+          ),
+        );
+
+        const pathImages = images.map(img => img.path);
+
+        setCaptures(pathImages);
+
+        count++;
+        if (count === 2) {
+          setIsTakingPhoto(false);
+          clearInterval(id);
+          setIsCaptured(true);
+        }
+      }, timer);
+    } catch (e) {
+      console.error('Failed to take photo!', e);
+    }
+  }, [takePhotoOptions, timer]);
 
   useEffect(() => {
     if (isCaptured) {
@@ -193,7 +183,6 @@ export function CameraPage({navigation}: Props): React.ReactElement {
                 onInitialized={onInitialized}
                 onError={onError}
                 enableZoomGesture={false}
-                animatedProps={cameraAnimatedProps}
                 photo={true}
                 orientation="portrait"
               />
@@ -205,14 +194,9 @@ export function CameraPage({navigation}: Props): React.ReactElement {
       <CaptureButton
         style={styles.captureButton}
         camera={camera}
-        onMediaCaptured={onMediaCaptured}
-        cameraZoom={zoom}
-        minZoom={minZoom}
-        maxZoom={maxZoom}
         flash={supportsFlash ? flash : 'off'}
         enabled={isCameraInitialized && isActive && !isTakingPhoto}
         setIsPressingButton={setIsPressingButton}
-        timer={timer}
         capturePhotos={onBurst}
       />
 
