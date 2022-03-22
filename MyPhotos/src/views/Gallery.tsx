@@ -1,5 +1,6 @@
 import React, {useCallback, useMemo, useState, useEffect} from 'react';
 import {
+  Alert,
   Dimensions,
   SafeAreaView,
   StatusBar,
@@ -15,8 +16,6 @@ import {Routes} from '../Routes';
 import ShareModal from './ShareModal';
 import {StatusBarBlurBackground} from './StatusBarBlurBackground';
 import {baseURL, SAFE_AREA_PADDING} from '../Constants';
-import {photoApi} from '../lib/apiEndpoints';
-import axios from 'axios';
 
 console.disableYellowBox = true;
 
@@ -64,29 +63,35 @@ const PhotoGallery = ({route, navigation}: Props) => {
   }, [images, selected]);
 
   const uploadImage = useCallback(async (path: string): Promise<void> => {
+    const name = path.split('tmp/ReactNative/')[1];
+    const type = path.split('tmp/ReactNative/')[1].split('.')[1];
+    const formData = new FormData();
+
+    formData.append('document', {
+      name,
+      type: `image/${type}`,
+      uri: path,
+    } as unknown) as unknown as Blob;
+
+    const config = {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'multipart/form-data',
+      },
+      body: formData,
+    };
+
     try {
-      const name = path.split('tmp/ReactNative/')[1];
-      const type = path.split('tmp/ReactNative/')[1].split('.')[1];
+      const response = await fetch(`${baseURL}`, config);
 
-      const formData = new FormData();
-
-      formData.append('document', {
-        name,
-        type: `image/${type}`,
-        uri: path,
-      } as unknown) as unknown as Blob;
-
-      const config = {
-        headers: {
-          'content-type': 'multipart/form-data',
-        },
-      };
-
-      const res = axios.post(`${baseURL}${photoApi}`, formData, config);
-      console.log('res', res);
+      if (response.status === 200) {
+        setIsShared(false);
+        Alert.alert('Shared to the backend');
+      }
     } catch (errors: any) {
       const splitError = errors.toString().split(': ');
-      console.log(splitError);
+      Alert.alert(splitError);
     }
   }, []);
 
